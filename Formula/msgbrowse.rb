@@ -1,1 +1,25 @@
-Y2xhc3MgTXNnYnJvd3NlIDwgRm9ybXVsYQogIGRlc2MgIkJyb3dzZSwgc2VhcmNoLCBhbmQgZXhwb3J0IGlNZXNzYWdlLCBTaWduYWwsIGFuZCBXaGF0c0FwcCBjb252ZXJzYXRpb25zIgogIGhvbWVwYWdlICJodHRwczovL2dpdGh1Yi5jb20vc3R1bXAtd3RmL21zZ2Jyb3dzZSIKICB1cmwgImh0dHBzOi8vZ2l0aHViLmNvbS9zdHVtcC13dGYvbXNnYnJvd3NlL2FyY2hpdmUvcmVmcy90YWdzL3YwLjQuMC50YXIuZ3oiCiAgc2hhMjU2ICJlNGQyZTlhMmY3YTNjYmY1ODhkNTliMzA2OWJkYTMzMGQ1MGM5YzQ5ZTcxNzEyNjI5MjJlOTFiZTY5MzI0MzA0IgogIGxpY2Vuc2UgIk1JVCIKICBoZWFkICJodHRwczovL2dpdGh1Yi5jb20vc3R1bXAtd3RmL21zZ2Jyb3dzZS5naXQiLCBicmFuY2g6ICJtYWluIgoKICBkZXBlbmRzX29uICJnbyIgPT4gOmJ1aWxkCgogIGRlZiBpbnN0YWxsCiAgICAjIFZlcnNpb24vQ29tbWl0L0J1aWxkRGF0ZSBhcmUgaW5qZWN0ZWQgaW50byBpbnRlcm5hbC9jbGkgYnkgdGhlIHVwc3RyZWFtCiAgICAjIE1ha2VmaWxlLiBSZXByb2R1Y2VkIGhlcmUsIG1pbnVzIENvbW1pdC9CdWlsZERhdGU6IGEgcmVsZWFzZSB0YXJiYWxsIGhhcwogICAgIyBubyBnaXQgbWV0YWRhdGEsIGFuZCBiYWtpbmcgYSB0aW1lc3RhbXAgaW4gd291bGQgbWFrZSB0aGUgYnVpbGQKICAgICMgbm9uLXJlcHJvZHVjaWJsZS4KICAgIGxkZmxhZ3MgPSAiLXMgLXcgLVggZ2l0aHViLmNvbS9qb2VzdHVtcC9tc2dicm93c2UvaW50ZXJuYWwvY2xpLlZlcnNpb249diN7dmVyc2lvbn0iCiAgICBzeXN0ZW0gImdvIiwgImJ1aWxkIiwgKnN0ZF9nb19hcmdzKGxkZmxhZ3M6IGxkZmxhZ3MpLCAiLi9jbWQvbXNnYnJvd3NlIgogIGVuZAoKICB0ZXN0IGRvCiAgICAjIGB2ZXJzaW9uYCBwcmludHMgdGhlIGxkZmxhZ3MtaW5qZWN0ZWQgdmVyc2lvbiwgc28gdGhpcyBhc3NlcnRzIGJvdGggdGhhdAogICAgIyB0aGUgYmluYXJ5IHJ1bnMgYW5kIHRoYXQgdGhlIHN0YW1waW5nIGFib3ZlIGFjdHVhbGx5IHRvb2sgZWZmZWN0LgogICAgYXNzZXJ0X21hdGNoICJ2I3t2ZXJzaW9ufSIsIHNoZWxsX291dHB1dCgiI3tiaW59L21zZ2Jyb3dzZSB2ZXJzaW9uIikKICBlbmQKZW5kCg==
+class Msgbrowse < Formula
+  desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
+  homepage "https://github.com/stump-wtf/msgbrowse"
+  url "https://github.com/stump-wtf/msgbrowse/archive/refs/tags/v0.4.0.tar.gz"
+  sha256 "e4d2e9a2f7a3cbf588d59b3069bda330d50c9c49e7171262922e91be69324304"
+  license "MIT"
+  head "https://github.com/stump-wtf/msgbrowse.git", branch: "main"
+
+  depends_on "go" => :build
+
+  def install
+    # Version/Commit/BuildDate are injected into internal/cli by the upstream
+    # Makefile. Reproduced here, minus Commit/BuildDate: a release tarball has
+    # no git metadata, and baking a timestamp in would make the build
+    # non-reproducible.
+    ldflags = "-s -w -X github.com/joestump/msgbrowse/internal/cli.Version=v#{version}"
+    system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/msgbrowse"
+  end
+
+  test do
+    # `version` prints the ldflags-injected version, so this asserts both that
+    # the binary runs and that the stamping above actually took effect.
+    assert_match "v#{version}", shell_output("#{bin}/msgbrowse version")
+  end
+end

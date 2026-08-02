@@ -1,6 +1,6 @@
 cask "msgbrowse-desktop" do
-  version "0.4.0"
-  sha256 "f94d35fbf0483f7ce4b4f2abb40217c1c6157cd4973ad49d666747d0d933b5ac"
+  version "0.4.1"
+  sha256 "071efc63c01e268883423de9e6ed4c8d291816aa6526aaf5aadd1603952469a1"
 
   url "https://github.com/stump-wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
   name "msgbrowse"

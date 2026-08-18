@@ -1,18 +1,21 @@
 cask "msgbrowse-desktop" do
-  version "0.4.6"
-  sha256 "4fbb9727ab3798db369aaf939e831e2531a702c994f5914f75fcd79e603df7f4"
+  version "0.5.0"
+  sha256 "3107c04f75c5541854caf75cbef944df2fce7178f8ac68700e38ede16bc83108"
 
-  url "https://github.com/stump-wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
+  # Served from the canonical Gitea release asset, not the GitHub mirror —
+  # the mirror lags behind Gitea (and its push credential has broken entirely
+  # in the past), so the zip is attached to the Gitea release and downloaded
+  # from here. The URL is stable per tag.
+  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
   name "msgbrowse"
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
-  homepage "https://github.com/stump-wtf/msgbrowse"
+  homepage "https://gitea.stump.rocks/stump.wtf/msgbrowse"
 
-  # Every release is published as a prerelease until a Developer ID is
-  # provisioned (see desktop.yml), and GitHub's /releases/latest skips
-  # prereleases — so :github_latest would report "no version found". Match the
-  # tags directly instead.
+  # livecheck follows the canonical Gitea tags. The old GitHub-mirror livecheck
+  # (and the note about prereleases below) no longer applies: the canonical
+  # release is on Gitea.
   livecheck do
-    url "https://github.com/stump-wtf/msgbrowse.git"
+    url "https://gitea.stump.rocks/stump.wtf/msgbrowse.git"
     strategy :git
     regex(/^v?(\d+(?:\.\d+)+)$/i)
   end

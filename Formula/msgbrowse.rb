@@ -1,10 +1,13 @@
 class Msgbrowse < Formula
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
-  homepage "https://github.com/stump-wtf/msgbrowse"
-  url "https://github.com/stump-wtf/msgbrowse/archive/refs/tags/v0.4.6.tar.gz"
-  sha256 "27d32683d331f4d7558eb80b1bc68f7eaee374b80d4236139609df1a2f9c5dbf"
+  homepage "https://gitea.stump.rocks/stump.wtf/msgbrowse"
+  # Served from the canonical Gitea release assets, not the GitHub mirror —
+  # the mirror lags (and has broken entirely in the past), while these
+  # release-download URLs are stable and public.
+  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v0.5.0/msgbrowse-v0.5.0-source.tar.gz"
+  sha256 "3993dde47d1c17778ea1dc0bab7e9f305bd6f4f7eb03be834276a4e0ebe98c3f"
   license "MIT"
-  head "https://github.com/stump-wtf/msgbrowse.git", branch: "main"
+  head "https://gitea.stump.rocks/stump.wtf/msgbrowse.git", branch: "main"
 
   depends_on "go" => :build
 

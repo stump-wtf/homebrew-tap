@@ -1,6 +1,6 @@
 cask "msgbrowse-desktop" do
   version "0.5.0"
-  sha256 "3107c04f75c5541854caf75cbef944df2fce7178f8ac68700e38ede16bc83108"
+  sha256 "852648718cd05c2f40bdb3fdc31f8a0ac08422b7bc0714a58dafb52b020def9b"
 
   # Served from the canonical Gitea release asset, not the GitHub mirror —
   # the mirror lags behind Gitea (and its push credential has broken entirely

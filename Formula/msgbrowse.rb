@@ -4,8 +4,8 @@ class Msgbrowse < Formula
   # Served from the canonical Gitea release assets, not the GitHub mirror —
   # the mirror lags (and has broken entirely in the past), while these
   # release-download URLs are stable and public.
-  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v0.5.0/msgbrowse-v0.5.0-source.tar.gz"
-  sha256 "3993dde47d1c17778ea1dc0bab7e9f305bd6f4f7eb03be834276a4e0ebe98c3f"
+  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v0.7.0/msgbrowse-v0.7.0-source.tar.gz"
+  sha256 "15e7248e2857ba690f4f85a26908cc66cabd0ecee60ee727b09f3ac4d6332d3c"
   license "MIT"
   head "https://gitea.stump.rocks/stump.wtf/msgbrowse.git", branch: "main"
 

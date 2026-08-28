@@ -1,21 +1,30 @@
 cask "msgbrowse-desktop" do
-  version "0.5.0"
-  sha256 "852648718cd05c2f40bdb3fdc31f8a0ac08422b7bc0714a58dafb52b020def9b"
+  version "0.8.0"
+  sha256 "ba8c5f2b0e072ce156e75344cdb847d8404144cc47753e9f506c28ed68708c02"
 
-  # Served from the canonical Gitea release asset, not the GitHub mirror —
-  # the mirror lags behind Gitea (and its push credential has broken entirely
-  # in the past), so the zip is attached to the Gitea release and downloaded
-  # from here. The URL is stable per tag.
-  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
+  # Release Assets Are Served From The GitHub Mirror
+  #
+  # The darwin .app is built by GitHub Actions (Gitea has no macOS runner), and
+  # gitea.stump.rocks is an RFC1918 address reachable only from the LAN — so the
+  # Gitea copy of this zip was both second-hand and unfetchable off-network. The
+  # step that used to mirror it back to Gitea timed out on every tag from v0.6.0
+  # on, which is why this cask sat at 0.5.0 for three releases. Point straight at
+  # the release the build actually produces.
+  #
+  # `v#{version}` is interpolated deliberately: the CI tap-bump rewrites the
+  # `version` line alone and the URL follows.
+  #
+  # @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
+  # and bumped 0.5.0 -> 0.8.0.
+  url "https://github.com/stump-wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
   name "msgbrowse"
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
-  homepage "https://gitea.stump.rocks/stump.wtf/msgbrowse"
+  homepage "https://stump-wtf.github.io/msgbrowse/"
 
-  # livecheck follows the canonical Gitea tags. The old GitHub-mirror livecheck
-  # (and the note about prereleases below) no longer applies: the canonical
-  # release is on Gitea.
+  # Tags are mirrored from the canonical Gitea repo within seconds of a release,
+  # and the mirror is the host this cask downloads from, so track tags here.
   livecheck do
-    url "https://gitea.stump.rocks/stump.wtf/msgbrowse.git"
+    url "https://github.com/stump-wtf/msgbrowse.git"
     strategy :git
     regex(/^v?(\d+(?:\.\d+)+)$/i)
   end

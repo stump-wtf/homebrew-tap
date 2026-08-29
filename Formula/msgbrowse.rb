@@ -1,13 +1,29 @@
 class Msgbrowse < Formula
+  # Release Assets Are Served From The GitHub Mirror
+  #
+  # gitea.stump.rocks resolves to an RFC1918 address — public in DNS, routable
+  # only from the LAN. Serving the tap from Gitea release-download URLs made
+  # `brew install` hang for anyone off the network, and made the tap-bump step
+  # impossible to run from a GitHub-hosted runner: it timed out at curl exit 28
+  # on every tag from v0.6.0 on, so the automated bump never once succeeded and
+  # every version in this file's history was pasted in by hand.
+  #
+  # The GitHub release is public and is where the darwin .app is actually built,
+  # so it is the only copy every consumer can fetch. The source tarball is a
+  # deterministic `git archive` published as a release asset rather than
+  # GitHub's on-the-fly /archive/refs/tags endpoint, whose bytes have shifted
+  # under projects before and would invalidate this sha256.
+  #
+  # @joestump 08/28/2026 - Repointed url/homepage/head at the GitHub mirror and
+  # bumped to v0.8.0. This reverses the earlier "canonical Gitea assets" choice:
+  # the canonical-host rule still governs where code, issues and PRs live, but a
+  # tap is consumed by machines that are not on the LAN.
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
-  homepage "https://gitea.stump.rocks/stump.wtf/msgbrowse"
-  # Served from the canonical Gitea release assets, not the GitHub mirror —
-  # the mirror lags (and has broken entirely in the past), while these
-  # release-download URLs are stable and public.
-  url "https://gitea.stump.rocks/stump.wtf/msgbrowse/releases/download/v0.7.0/msgbrowse-v0.7.0-source.tar.gz"
-  sha256 "15e7248e2857ba690f4f85a26908cc66cabd0ecee60ee727b09f3ac4d6332d3c"
+  homepage "https://stump-wtf.github.io/msgbrowse/"
+  url "https://github.com/stump-wtf/msgbrowse/releases/download/v0.8.0/msgbrowse-v0.8.0-source.tar.gz"
+  sha256 "cae3252e312244babebdd8faa8184a18ebb8c765357e5346b5d2512811364537"
   license "MIT"
-  head "https://gitea.stump.rocks/stump.wtf/msgbrowse.git", branch: "main"
+  head "https://github.com/stump-wtf/msgbrowse.git", branch: "main"
 
   depends_on "go" => :build
 

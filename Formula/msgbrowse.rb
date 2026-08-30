@@ -18,10 +18,12 @@ class Msgbrowse < Formula
   # bumped to v0.8.0. This reverses the earlier "canonical Gitea assets" choice:
   # the canonical-host rule still governs where code, issues and PRs live, but a
   # tap is consumed by machines that are not on the LAN.
+  #
+  # @joestump 08/30/2026 - Bumped to v0.8.1.
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
   homepage "https://stump-wtf.github.io/msgbrowse/"
-  url "https://github.com/stump-wtf/msgbrowse/releases/download/v0.8.0/msgbrowse-v0.8.0-source.tar.gz"
-  sha256 "cae3252e312244babebdd8faa8184a18ebb8c765357e5346b5d2512811364537"
+  url "https://github.com/stump-wtf/msgbrowse/releases/download/v0.8.1/msgbrowse-v0.8.1-source.tar.gz"
+  sha256 "44836d76d70be2417b5253e1cd5ef49794ab912e4a0ae556a6494f4fbf76b0e0"
   license "MIT"
   head "https://github.com/stump-wtf/msgbrowse.git", branch: "main"
 

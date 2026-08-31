@@ -1,6 +1,6 @@
 cask "msgbrowse-desktop" do
-  version "0.8.0"
-  sha256 "ba8c5f2b0e072ce156e75344cdb847d8404144cc47753e9f506c28ed68708c02"
+  version "0.8.1"
+  sha256 "16dbd9e7fbb3ddba7faa03ddd439f1eeb236ef5a5aa23b91efb56fad488c2e48"
 
   # Release Assets Are Served From The GitHub Mirror
   #
@@ -16,6 +16,10 @@ cask "msgbrowse-desktop" do
   #
   # @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
   # and bumped 0.5.0 -> 0.8.0.
+  #
+  # @joestump 08/30/2026 - Bumped 0.8.0 -> 0.8.1. The 08/28 formula bump only
+  # touched Formula/msgbrowse.rb, so the desktop app stayed on 0.8.0; formula
+  # and cask now go up together.
   url "https://github.com/stump-wtf/msgbrowse/releases/download/v#{version}/msgbrowse-desktop_darwin_universal.zip"
   name "msgbrowse"
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"

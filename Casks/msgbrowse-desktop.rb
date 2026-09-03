@@ -1,6 +1,6 @@
 cask "msgbrowse-desktop" do
-  version "0.8.1"
-  sha256 "16dbd9e7fbb3ddba7faa03ddd439f1eeb236ef5a5aa23b91efb56fad488c2e48"
+  version "0.8.3"
+  sha256 "11aacedbf5bea8323dcb87f06de5a4281b20281c92c51ad8bcea086deb45607e"
 
   # Release Assets Are Served From The GitHub Mirror
   #

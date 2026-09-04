@@ -22,8 +22,8 @@ class Msgbrowse < Formula
   # @joestump 08/30/2026 - Bumped to v0.8.1.
   desc "Browse, search, and export iMessage, Signal, and WhatsApp conversations"
   homepage "https://stump-wtf.github.io/msgbrowse/"
-  url "https://github.com/stump-wtf/msgbrowse/releases/download/v0.8.14/msgbrowse-v0.8.14-source.tar.gz"
-  sha256 "a83a42c5aded3b93d0be3c794893d633dcd83d1dec75cbda3272997dc0040927"
+  url "https://github.com/stump-wtf/msgbrowse/releases/download/v0.8.15/msgbrowse-v0.8.15-source.tar.gz"
+  sha256 "69a66f46a57750c8cfd50b4721491c397224513aeaaef6dd709a41674b481d06"
   license "MIT"
   head "https://github.com/stump-wtf/msgbrowse.git", branch: "main"
 

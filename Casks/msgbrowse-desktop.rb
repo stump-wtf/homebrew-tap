@@ -1,6 +1,6 @@
 cask "msgbrowse-desktop" do
   version "0.8.25"
-  sha256 "888998e08023a3bc869163dec49be57ddb0f4a1c1821530fd68f28cd9388ce8a"
+  sha256 "4378c137726685a8e8f66f1ed92fe51b3cc16eb9c4c5c0f612aaf4be0f592c22"
 
   # Release Assets Are Served From The GitHub Mirror
   #
@@ -14,7 +14,9 @@ cask "msgbrowse-desktop" do
   # `v#{version}` is interpolated deliberately: the CI tap-bump rewrites the
   # `version` line alone and the URL follows.
   #
-  # @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
+  # @joestump-agent 09/05/2026 - Corrected the v0.8.25 sha256: a duplicate Desktop run
+#   replaced the release assets after the automated tap bump checksummed them.
+# @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
   # and bumped 0.5.0 -> 0.8.0.
   #
   # @joestump 08/30/2026 - Bumped 0.8.0 -> 0.8.1. The 08/28 formula bump only

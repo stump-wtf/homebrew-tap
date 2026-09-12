@@ -1,0 +1,6 @@
+# Agent worktrees. Claude Code puts them here, and git must never see them —
+# a worktree inside the repo would otherwise show up in status, globs and any
+# formula audit that walks the tree.
+#
+# @joestump-agent 09/12/2026 - Added while bumping the harness formula.
+.claude/worktrees/

@@ -7,25 +7,25 @@ tools.
 brew install stump-wtf/tap/msgbrowse
 ```
 
-Installing by the **fully qualified name** is the whole install. It is also the
-only form that works out of the box: since [Homebrew 6.0.0][hb6] non-official
-taps require explicit trust, and a fully qualified name trusts just that one
-formula rather than the tap and everything it may ever contain.
+Installing by the **fully qualified name** is the whole install — no `brew tap`,
+no trust step. Since [Homebrew 6.0.0][hb6] non-official taps require explicit
+trust before Homebrew will load them, and naming the tap in full is what tells
+Homebrew which one you meant.
 
 `brew tap stump-wtf/tap` followed by `brew install msgbrowse` now fails, because
-the short name needs the tap loaded and the tap is untrusted. If you genuinely
-want the short names, trust each item you use:
+the short name needs the tap loaded and the tap is untrusted. If you want the
+short names, trust the tap once:
 
 ```bash
 brew tap stump-wtf/tap
-brew trust --formula stump-wtf/tap/msgbrowse
+brew trust stump-wtf/tap
 brew install msgbrowse
 ```
 
-`brew trust --tap stump-wtf/tap` also works, and is deliberately not what this
-README recommends: it accepts every formula, cask and external command the tap
-carries **now or in the future**. Homebrew's own guidance is to prefer trusting
-the specific item you need.
+That trusts everything this tap carries now or later, which is the point — it is
+one vendor's tap of one vendor's tools. `brew trust --formula
+stump-wtf/tap/msgbrowse` narrows it to a single formula if you would rather
+re-approve each one.
 
 [hb6]: https://brew.sh/2026/06/11/homebrew-6.0.0/
 

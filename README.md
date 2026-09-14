@@ -4,9 +4,30 @@ Homebrew formulae and casks for the [stump.wtf](https://github.com/stump-wtf)
 tools.
 
 ```bash
+brew install stump-wtf/tap/msgbrowse
+```
+
+Installing by the **fully qualified name** is the whole install — no `brew tap`,
+no trust step. Since [Homebrew 6.0.0][hb6] non-official taps require explicit
+trust before Homebrew will load them, and naming the tap in full is what tells
+Homebrew which one you meant.
+
+`brew tap stump-wtf/tap` followed by `brew install msgbrowse` now fails, because
+the short name needs the tap loaded and the tap is untrusted. If you want the
+short names, trust the tap once:
+
+```bash
 brew tap stump-wtf/tap
+brew trust stump-wtf/tap
 brew install msgbrowse
 ```
+
+That trusts everything this tap carries now or later, which is the point — it is
+one vendor's tap of one vendor's tools. `brew trust --formula
+stump-wtf/tap/msgbrowse` narrows it to a single formula if you would rather
+re-approve each one.
+
+[hb6]: https://brew.sh/2026/06/11/homebrew-6.0.0/
 
 ## Formulae
 
@@ -28,14 +49,14 @@ rather than shipped as bottles. None require cgo.
 | `msgbrowse-desktop` | The msgbrowse macOS `.app` — native window, bundled exporters |
 
 ```bash
-brew install --cask msgbrowse-desktop
+brew install --cask stump-wtf/tap/msgbrowse-desktop
 ```
 
 The formula and the cask are **different artifacts of the same project**, and
 installing one does not get you the other:
 
-- `brew install msgbrowse` builds the **CLI** from source (`cmd/msgbrowse`).
-- `brew install --cask msgbrowse-desktop` downloads the prebuilt universal
+- `brew install stump-wtf/tap/msgbrowse` builds the **CLI** from source (`cmd/msgbrowse`).
+- `brew install --cask stump-wtf/tap/msgbrowse-desktop` downloads the prebuilt universal
   **`.app`** from the upstream GitHub Release and drops it in `/Applications`.
 
 They coexist fine. Homebrew forbids a formula from installing an `.app` into

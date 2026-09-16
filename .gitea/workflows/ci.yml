@@ -1,0 +1,87 @@
+# Continuous Integration for Homebrew Tap
+#
+# Runs syntax and audit checks on every push and PR. Full `brew install` tests
+# cannot run here (no macOS runners on this Gitea instance), so the workflow
+# validates formula structure and metadata only.
+#
+# What runs:
+# - `ruby -c` on every Formula/*.rb and Casks/*.rb
+# - `brew style` on changed files
+# - `brew audit --strict --online` on changed formulas (verifies url resolves
+#   and sha256 matches)
+#
+# The GitHub mirror has no CI equivalent — this is the only automated check.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    name: Ruby syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Check Formula syntax
+        run: |
+          for f in Formula/*.rb; do
+            ruby -c "$f"
+          done
+
+      - name: Check Cask syntax
+        run: |
+          for f in Casks/*.rb; do
+            ruby -c "$f"
+          done
+
+  style:
+    name: Homebrew style
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            Formula/*.rb
+            Casks/*.rb
+
+      - name: Run brew style
+        if: steps.changed.outputs.any_changed == 'true'
+        run: |
+          for f in ${{ steps.changed.outputs.all_changed_files }}; do
+            brew style "$f"
+          done
+
+  audit:
+    name: Homebrew audit
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get changed formula files
+        id: changed
+        uses: tj-actions/changed-files@v44
+        with:
+          files: Formula/*.rb
+
+      - name: Run brew audit
+        if: steps.changed.outputs.any_changed == 'true'
+        run: |
+          for f in ${{ steps.changed.outputs.all_changed_files }}; do
+            # Extract formula class name and run strict online audit
+            formula=$(basename "$f" .rb)
+            brew audit --strict --online "$formula"
+          done

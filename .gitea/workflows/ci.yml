@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: homebrew/brew:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Homebrew
+        run: |
+          brew update-reset
+          brew tap --force homebrew/core
+
+      - name: Audit formula syntax
+        run: |
+          for f in Formula/*.rb; do
+            echo "Checking $f"
+            ruby -c "$f"
+          done
+
+      - name: Audit cask syntax
+        run: |
+          for f in Casks/*.rb; do
+            echo "Checking $f"
+            ruby -c "$f"
+          done
+
+      - name: Style check
+        run: |
+          brew style Formula Casks
+
+      - name: Audit formulas
+        run: |
+          for f in Formula/*.rb; do
+            name=$(basename "$f" .rb)
+            echo "Auditing $name"
+            brew audit --strict --online "$name" || echo "::warning file=$f::brew audit reported issues"
+          done
+
+      - name: Audit casks
+        run: |
+          for f in Casks/*.rb; do
+            name=$(basename "$f" .rb)
+            echo "Auditing cask $name"
+            brew audit --cask --strict --online "$name" || echo "::warning file=$f::brew audit reported issues"
+          done

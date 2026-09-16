@@ -15,8 +15,8 @@ cask "msgbrowse-desktop" do
   # `version` line alone and the URL follows.
   #
   # @joestump-agent 09/05/2026 - Corrected the v0.8.25 sha256: a duplicate Desktop run
-#   replaced the release assets after the automated tap bump checksummed them.
-# @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
+  #   replaced the release assets after the automated tap bump checksummed them.
+  # @joestump 08/28/2026 - Repointed url/homepage/livecheck at the GitHub mirror
   # and bumped 0.5.0 -> 0.8.0.
   #
   # @joestump 08/30/2026 - Bumped 0.8.0 -> 0.8.1. The 08/28 formula bump only

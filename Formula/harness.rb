@@ -23,7 +23,56 @@ class Harness < Formula
     system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/harness"
   end
 
+  # Daemon Service Definition
+  #
+  # Lets `brew services start harness` stand the daemon up instead of making
+  # people hand-author ~/Library/LaunchAgents/dev.harness.daemon.plist with
+  # absolute paths substituted in. Mirrors that plist from the run-as-a-service
+  # guide: `daemon start` runs in the FOREGROUND (--detach is the opt-in
+  # background mode, and a self-backgrounding process makes launchd respawn
+  # forever), relaunch on a crash but not after a clean `harness daemon stop`,
+  # and the daemon's own log kept separate from each harness's logs.
+  #
+  # PATH is the one thing this cannot fully solve — see `caveats`.
+  #
+  # @joestump 09/16/2026 - Added the service block for stump-wtf/harness#6.
+  service do
+    run [opt_bin/"harness", "daemon", "start"]
+    keep_alive successful_exit: false
+    run_at_load true
+    environment_variables PATH: std_service_path_env
+    log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
+    error_log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
+  end
+
+  def caveats
+    <<~EOS
+      Run the daemon in the background:
+        brew services start harness
+
+      A service does not read your shell profile, and agent CLIs are looked up
+      on PATH when a harness spawns. This service's PATH is Homebrew plus the
+      system directories, so an agent installed elsewhere -- ~/.local/bin, an
+      npm/bun global prefix, mise or asdf shims -- will NOT be found, and the
+      harness fails at spawn rather than at `brew services start`.
+
+      If that applies to you, set PATH for that harness in its `env_file`.
+      (There is no `cmd` key to point at an absolute path -- the `harness`
+      enum picks the executable.)
+
+      On macOS, `brew services` runs this in your GUI login session, so agents
+      inherit your login Keychain: a claude-code harness needs no env_file.
+    EOS
+  end
+
   test do
     assert_match "v#{version}", shell_output("#{bin}/harness --version")
+
+    # The service must run the daemon in the foreground. If a future change
+    # makes `daemon start` self-background, launchd respawns it forever and
+    # `brew services` reports it as constantly crashing -- so pin the shape of
+    # the service definition, not just that one exists.
+    assert_equal ["#{opt_bin}/harness", "daemon", "start"], service.command
+    refute_includes service.command, "--detach"
   end
 end

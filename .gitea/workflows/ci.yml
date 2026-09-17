@@ -79,4 +79,3 @@ jobs:
             formula=$(basename "$f" .rb)
             brew audit --strict --online "$formula"
           done
-          done

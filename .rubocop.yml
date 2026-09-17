@@ -1,0 +1,13 @@
+# Scoped RuboCop exclusions for brew style.
+#
+# Cask/InstallSteps fires on msgbrowse-desktop's legacy postflight block.
+# Migrating it to postflight_steps is deliberately deferred: the migration
+# is blocked on a real macOS install verification (issue #13), and an
+# unverified migration can silently stop stripping the quarantine
+# attribute — a tracked style exclusion beats a silent regression. Delete
+# this file when the migration lands.
+#
+# @joestump-agent 09/17/2026 - Added for the CI workflow in PR #17.
+Cask/InstallSteps:
+  Exclude:
+    - Casks/msgbrowse-desktop.rb

@@ -50,10 +50,17 @@ cask "msgbrowse-desktop" do
   # Delete this block once the owner-gated signing secrets in desktop.yml go
   # live and releases ship notarized — at that point quarantine is harmless and
   # leaving it stripped needlessly gives up a Gatekeeper check.
+  #
+  # rubocop:disable Cask/InstallSteps
+  # The postflight_steps migration is deliberately deferred: it is blocked on
+  # a real macOS install verification (issue #13), and an unverified migration
+  # can silently stop stripping the quarantine attribute. A tracked style
+  # exclusion beats a silent regression.
   postflight do
     system_command "/usr/bin/xattr",
                    args: ["-dr", "com.apple.quarantine", "#{appdir}/msgbrowse.app"]
   end
+  # rubocop:enable Cask/InstallSteps
 
   uninstall quit: "com.wails.msgbrowse"
 

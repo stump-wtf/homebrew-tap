@@ -68,17 +68,15 @@ jobs:
 
       - name: Run brew audit
         run: |
+          # Formulas get the full strict online audit. Casks do not: cask
+          # audit unpacks the downloaded .app and reads its Info.plist with
+          # plutil, a macOS-only binary the Linux homebrew/brew container
+          # does not ship — with or without --strict (runs 11864/11866 both
+          # died on `plutil` exit 127). Cask Ruby is still linted by
+          # `brew style`; full cask artifact audits belong on a macOS runner
+          # (the GitHub mirror, if one is wired later).
           for f in Formula/*.rb; do
             formula=$(basename "$f" .rb)
             brew audit --strict --online "$formula"
           done
-          # Cask artifact inspection needs plutil, a macOS-only binary that
-          # the Linux homebrew/brew container does not ship — run 11864 died
-          # on `plutil -convert xml1` exit 127. --strict for casks is what
-          # unpacks the .app; the non-strict online audit (URL, sha256,
-          # livecheck metadata) is the part a Linux runner can actually do,
-          # and brew style still covers the cask's Ruby.
-          for f in Casks/*.rb; do
-            cask=$(basename "$f" .rb)
-            brew audit --cask --online "$cask"
           done

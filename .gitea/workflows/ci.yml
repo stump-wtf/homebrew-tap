@@ -11,10 +11,17 @@
 #
 # Everything runs in the official `homebrew/brew` container on the ubuntu
 # runners this instance has: `brew style` and `brew audit` work on Linux.
-# Node-based actions fail inside that container (no node on PATH, exit 127),
-# and the repo is pre-populated in the job's workspace volume by the runner,
-# so there is no checkout step. The tap is registered from the workspace and
-# trusted, as current Homebrew requires before loading formulae from a tap.
+# Node-based actions (actions/checkout included) fail inside that container —
+# no node on PATH, exit 127 — so the repo is cloned with git, which the image
+# ships. The tap is registered from the workspace and trusted, as current
+# Homebrew requires before loading formulae from a tap.
+#
+# @joestump-agent 09/17/2026 - Replaced the "workspace is pre-populated"
+# assumption with an explicit clone. It was false on this act_runner: run 11836
+# job 65686 created the /workspace/<owner>/<repo> volume EMPTY and the first
+# step died on `ls Formula/*.rb` ("No such file or directory") with no clone
+# anywhere in the log. A full clone is used deliberately: the PR head SHA is a
+# branch tip, not necessarily reachable from a depth-1 fetch of the base.
 
 name: CI
 
@@ -33,6 +40,11 @@ jobs:
     runs-on: ubuntu-latest
     container: homebrew/brew:latest
     steps:
+      - name: Clone the tap
+        run: |
+          git clone --quiet https://gitea.stump.rocks/stump.wtf/homebrew-tap.git .
+          git checkout --quiet --detach "$GITHUB_SHA"
+
       - name: Verify workspace
         run: |
           ls Formula/*.rb Casks/*.rb

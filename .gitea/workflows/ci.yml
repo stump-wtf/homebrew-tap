@@ -1,0 +1,81 @@
+# Continuous Integration for Homebrew Tap
+#
+# Runs style and audit checks on every push and PR. Full `brew install`
+# tests cannot run here (no macOS runners on this Gitea instance), so the
+# workflow validates formula and cask structure and metadata only.
+#
+# What runs:
+# - `brew style` on Formula and Casks (also catches Ruby syntax errors)
+# - `brew audit --strict --online` on every formula (verifies url resolves and
+#   sha256 matches) and every cask
+#
+# Everything runs in the official `homebrew/brew` container on the ubuntu
+# runners this instance has: `brew style` and `brew audit` work on Linux.
+# Node-based actions (actions/checkout included) fail inside that container —
+# no node on PATH, exit 127 — so the repo is cloned with git, which the image
+# ships. The tap is registered from the workspace and trusted, as current
+# Homebrew requires before loading formulae from a tap.
+#
+# @joestump-agent 09/17/2026 - Replaced the "workspace is pre-populated"
+# assumption with an explicit clone. It was false on this act_runner: run 11836
+# job 65686 created the /workspace/<owner>/<repo> volume EMPTY and the first
+# step died on `ls Formula/*.rb` ("No such file or directory") with no clone
+# anywhere in the log. A full clone is used deliberately: the PR head SHA is a
+# branch tip, not necessarily reachable from a depth-1 fetch of the base.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Style and audit
+    runs-on: ubuntu-latest
+    container: homebrew/brew:latest
+    steps:
+      - name: Clone the tap
+        run: |
+          git clone --quiet https://gitea.stump.rocks/stump.wtf/homebrew-tap.git .
+          git checkout --quiet --detach "$GITHUB_SHA"
+
+      - name: Verify workspace
+        run: |
+          ls Formula/*.rb Casks/*.rb
+
+      - name: Load and trust the tap
+        run: |
+          brew tap stump.wtf/homebrew-tap .
+          brew trust stump.wtf/tap
+
+      - name: Run brew style
+        run: |
+          # Cask/InstallSteps is excluded for issue #13: msgbrowse-desktop's
+          # postflight migration to postflight_steps is deliberately deferred
+          # until a real macOS install verifies the token form, and brew style
+          # offers no narrower scope here — inline rubocop directives are
+          # banned (Style/DisableCopsWithinSourceCodeDirective) and a
+          # tap-root .rubocop.yml is ignored for third-party taps (proven:
+          # run 11863 still failed with the exclusion file present). Remove
+          # the --except-cops flag when #13 lands.
+          brew style --except-cops Cask/InstallSteps Formula Casks
+
+      - name: Run brew audit
+        run: |
+          # Formulas get the full strict online audit. Casks do not: cask
+          # audit unpacks the downloaded .app and reads its Info.plist with
+          # plutil, a macOS-only binary the Linux homebrew/brew container
+          # does not ship — with or without --strict (runs 11864/11866 both
+          # died on `plutil` exit 127). Cask Ruby is still linted by
+          # `brew style`; full cask artifact audits belong on a macOS runner
+          # (the GitHub mirror, if one is wired later).
+          for f in Formula/*.rb; do
+            formula=$(basename "$f" .rb)
+            brew audit --strict --online "$formula"
+          done

@@ -35,7 +35,11 @@ cask "msgbrowse-desktop" do
     regex(/^v?(\d+(?:\.\d+)+)$/i)
   end
 
-  depends_on macos: :big_sur
+  # Homebrew/OSDependsOn: a bare `depends_on macos:` is enough here -- v0.8.x
+  # requires Big Sur or later implicitly, so naming the version was redundant
+  # and `brew style` rejected it. This made CI red for every PR in the tap,
+  # not just this cask's.
+  depends_on :macos
 
   app "msgbrowse.app"
 

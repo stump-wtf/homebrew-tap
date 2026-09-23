@@ -62,9 +62,13 @@ class Harness < Formula
     # come from a formula method (an earlier attempt called `service_path` and
     # raised "undefined local variable or method" under audit), nor from an
     # ivar set in install. It has to be computable right here.
-    environment_variables PATH: "#{std_service_path_env}:#{Dir.home}/.local/bin:#{Dir.home}/go/bin:" \
-                              "#{Dir.home}/.bun/bin:#{Dir.home}/.npm-global/bin:" \
-                              "#{Dir.home}/.local/share/mise/shims:#{Dir.home}/.asdf/shims"
+    #
+    # Built as an array join rather than one long interpolated string: that
+    # keeps every line short without a backslash continuation, which
+    # Layout/LineEndStringConcatenationIndentation then judges on alignment.
+    user_dirs = [".local/bin", "go/bin", ".bun/bin", ".npm-global/bin",
+                 ".local/share/mise/shims", ".asdf/shims"].map { |dir| "#{Dir.home}/#{dir}" }
+    environment_variables PATH: ([std_service_path_env] + user_dirs).join(":")
     log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
     error_log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
   end

@@ -1,8 +1,8 @@
 class Harness < Formula
   desc "Supervise long-running agent processes from a client-server TUI"
   homepage "https://github.com/stump-wtf/harness"
-  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.4.0.tar.gz"
-  sha256 "3f669172ac55252972feb953b924ce77cfb836505b795a61155510770116adb8"
+  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.5.0.tar.gz"
+  sha256 "7d5a88baff04a4d088de1ae110d65a89caa7c5d5d7d6de74461230bf528de554"
   license "MIT"
   head "https://github.com/stump-wtf/harness.git", branch: "main"
 
@@ -24,6 +24,7 @@ class Harness < Formula
     # @joestump-agent 09/12/2026 - Bumped to v0.3.0 and verified both builds.
     # @joestump-agent 09/23/2026 - Repointed the ldflag at the public module
     # path (the module moved in v0.4.0) and bumped to v0.4.0.
+    # @joestump 09/23/2026 - Bumped to v0.5.0.
     ldflags = "-s -w -X github.com/stump-wtf/harness/internal/buildinfo.Version=v#{version}"
     system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/harness"
   end

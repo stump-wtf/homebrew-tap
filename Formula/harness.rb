@@ -57,9 +57,23 @@ class Harness < Formula
     run [opt_bin/"harness", "daemon", "start"]
     keep_alive successful_exit: false
     run_at_load true
-    environment_variables PATH: "#{std_service_path_env}:#{Dir.home}/.local/bin:#{Dir.home}/go/bin:#{Dir.home}/.bun/bin:#{Dir.home}/.npm-global/bin:#{Dir.home}/.local/share/mise/shims:#{Dir.home}/.asdf/shims"
+    environment_variables PATH: service_path
     log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
     error_log_path "#{Dir.home}/Library/Logs/harness-daemon.log"
+  end
+
+  # The daemon's PATH: Homebrew and the system directories, then the per-user
+  # locations agent CLIs commonly land in. See the comment above.
+  def service_path
+    user_dirs = %w[
+      .local/bin
+      go/bin
+      .bun/bin
+      .npm-global/bin
+      .local/share/mise/shims
+      .asdf/shims
+    ].map { |dir| File.join(Dir.home, dir) }
+    ([std_service_path_env] + user_dirs).join(":")
   end
 
   def caveats

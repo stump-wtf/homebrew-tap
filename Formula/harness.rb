@@ -1,8 +1,8 @@
 class Harness < Formula
   desc "Supervise long-running agent processes from a client-server TUI"
   homepage "https://github.com/stump-wtf/harness"
-  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.7.0.tar.gz"
-  sha256 "97539fcaaf81ecad4d44079a47367597c9924f5ef7d4bb221da776385d6997c8"
+  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.8.0.tar.gz"
+  sha256 "15446a186a0cf653e74d45f5176db774bd2ff86ad2cd524042fe105877a043a9"
   license "MIT"
   head "https://github.com/stump-wtf/harness.git", branch: "main"
 
@@ -22,6 +22,11 @@ class Harness < Formula
     # in go.mod, which is the authority, not this recipe's history.
     #
     # @joestump-agent 09/12/2026 - Bumped to v0.3.0 and verified both builds.
+    #
+    # @joestump-agent 09/26/2026 - Bumped to v0.8.0. The module path is now
+    #   github.com/stump-wtf/harness (it was the Gitea one at v0.3.0), so the
+    #   -X path moved with it; verified the tarball builds and reports
+    #   "harness v0.8.0".
     # @joestump-agent 09/23/2026 - Repointed the ldflag at the public module
     # path (the module moved in v0.4.0) and bumped to v0.4.0.
     # @joestump 09/23/2026 - Bumped to v0.5.0.

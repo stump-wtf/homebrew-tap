@@ -1,8 +1,8 @@
 class Harness < Formula
   desc "Supervise long-running agent processes from a client-server TUI"
   homepage "https://github.com/stump-wtf/harness"
-  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.8.0.tar.gz"
-  sha256 "15446a186a0cf653e74d45f5176db774bd2ff86ad2cd524042fe105877a043a9"
+  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.9.0.tar.gz"
+  sha256 "a0ce6d10061d6c8f8a23eddc1957f8bb718fbbbd2a52682f4754d1508a8c8e65"
   license "MIT"
   head "https://github.com/stump-wtf/harness.git", branch: "main"
 
@@ -24,6 +24,7 @@ class Harness < Formula
     # @joestump-agent 09/12/2026 - Bumped to v0.3.0 and verified both builds.
     #
     # @joestump-agent 09/26/2026 - Bumped to v0.8.0. The module path is now
+    # @joestump-agent 09/27/2026 - Bumped to v0.9.0 and built from the tag tarball; --version reports v0.9.0.
     #   github.com/stump-wtf/harness (it was the Gitea one at v0.3.0), so the
     #   -X path moved with it; verified the tarball builds and reports
     #   "harness v0.8.0".

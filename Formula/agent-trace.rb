@@ -1,8 +1,8 @@
 class AgentTrace < Formula
   desc "Normalize agent session transcripts and stream-json runs"
   homepage "https://github.com/stump-wtf/agent-trace"
-  url "https://github.com/stump-wtf/agent-trace/archive/refs/tags/v0.7.0.tar.gz"
-  sha256 "98e6e2222746b21522ba56c1cc192f9cec6a95d0e7eca7be530f3a876b888ca0"
+  url "https://github.com/stump-wtf/agent-trace/archive/refs/tags/v0.7.1.tar.gz"
+  sha256 "cc39ea76522ecfc859cfd8a97536bbcb0359ba3dc46a58d2a5daefbd9a642c54"
   license "MIT"
   head "https://github.com/stump-wtf/agent-trace.git", branch: "main"
 
@@ -15,6 +15,9 @@ class AgentTrace < Formula
     # fails silently.
     #
     # @joestump-agent 09/27/2026 - Added at v0.7.0.
+    # @joestump-agent 09/27/2026 - Bumped to v0.7.1: the v0.7.0 tag was
+    # re-pointed after its release failed, poisoning sum.golang.org for
+    # go install; the tap tracks the good tag.
     system "go", "build", *std_go_args, "./cmd/agent-trace"
   end
 

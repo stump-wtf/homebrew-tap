@@ -36,8 +36,10 @@ re-approve each one.
 | `msgbrowse` | Browse, search, and export iMessage and Signal conversations |
 | `reduit` | Cache Proton Mail locally with semantic search and a stdio MCP server |
 | `harness` | Supervise long-running agent processes from a client-server TUI |
+| `agent-trace` | Normalize agent session transcripts and stream-json runs |
+| `switchboard` | Webhook intake board that verifies callers and patches work through to agents and a live web UI |
 
-All three are Go, built from source at install time (`depends_on "go" => :build`)
+All five are Go, built from source at install time (`depends_on "go" => :build`)
 rather than shipped as bottles. None require cgo.
 
 > `reduit` is at v0.1.0 and is **not fully tested** — treat it as a preview.

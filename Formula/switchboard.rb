@@ -1,5 +1,5 @@
 class Switchboard < Formula
-  desc "Webhook intake board that verifies callers and patches work through to agents and a live web UI"
+  desc "Webhook intake board that verifies callers and routes work to agents"
   homepage "https://github.com/stump-wtf/switchboard"
   url "https://github.com/stump-wtf/switchboard/archive/refs/tags/v0.6.0.tar.gz"
   sha256 "853038382c8b6cb923152f09e863823e47058fdf9c20080e75eb9fe591f5306f"

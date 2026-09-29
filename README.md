@@ -37,7 +37,7 @@ re-approve each one.
 | `reduit` | Cache Proton Mail locally with semantic search and a stdio MCP server |
 | `harness` | Supervise long-running agent processes from a client-server TUI |
 | `agent-trace` | Normalize agent session transcripts and stream-json runs |
-| `switchboard` | Webhook intake board that verifies callers and patches work through to agents and a live web UI |
+| `switchboard` | Webhook intake board that verifies callers and routes work to agents |
 
 All five are Go, built from source at install time (`depends_on "go" => :build`)
 rather than shipped as bottles. None require cgo.

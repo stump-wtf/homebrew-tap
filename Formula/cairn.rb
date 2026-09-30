@@ -23,23 +23,23 @@ class Cairn < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.3.0/cairn_0.3.0_darwin_arm64.tar.gz"
-      sha256 "21767780a49f7dd58666aadad44e4174ca733f0737df3bd34639683a97e3c069"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_darwin_arm64.tar.gz"
+      sha256 "97c1c11e41f9806033a33d34577c81ba3583bd7cd8ba9f62a84409e9220f20f2"
     end
     on_intel do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.3.0/cairn_0.3.0_darwin_amd64.tar.gz"
-      sha256 "26a07e00e32aba96635efdd453fb958ee30488a64bfd9e2135cdd6e33ff6c091"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_darwin_amd64.tar.gz"
+      sha256 "7544081275a2dbef75230f280ce33a2ace8a261b1c4fa291aabf9f1be1db9c14"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.3.0/cairn_0.3.0_linux_arm64.tar.gz"
-      sha256 "41fc0a367fa01de56f30389fb9a47f28bf16164f6a4764bb85e04fff61a699d2"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_linux_arm64.tar.gz"
+      sha256 "58f8c6e10a07add1ac04f362ee9cff262913e5fb15e7e1b115a8cec8b78efa28"
     end
     on_intel do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.3.0/cairn_0.3.0_linux_amd64.tar.gz"
-      sha256 "5e3916eaa6d4b494b6eddc4f3d976fedafebeef0903690a73ef549df9af7eb2c"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_linux_amd64.tar.gz"
+      sha256 "4ab829afb4ff328c272a299322a8da73c726b893bc9e1f1ecfcdfe29e2c8f083"
     end
   end
 

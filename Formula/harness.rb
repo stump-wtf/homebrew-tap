@@ -1,8 +1,8 @@
 class Harness < Formula
   desc "Supervise long-running agent processes from a client-server TUI"
   homepage "https://github.com/stump-wtf/harness"
-  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.11.0.tar.gz"
-  sha256 "87b864c8b882f00a85e8a874c51b84a25032749ceb89518751249bb217c04bd8"
+  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.12.0.tar.gz"
+  sha256 "43abcc455dddb89278bbb7dbfdcadede800d77afae6b9d4ec9948a9528d3bfe8"
   license "MIT"
   head "https://github.com/stump-wtf/harness.git", branch: "main"
 
@@ -41,6 +41,9 @@ class Harness < Formula
     #
     # @joestump-agent 09/29/2026 - Bumped to v0.11.0 and built from the tag
     # tarball; --version reports v0.11.0.
+    #
+    # @joestump 10/07/2026 - Bumped to v0.12.0 (agent stables) and built from
+    # the tag tarball; --version reports v0.12.0.
     ldflags = "-s -w -X github.com/stump-wtf/harness/internal/buildinfo.Version=v#{version}"
     system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/harness"
   end

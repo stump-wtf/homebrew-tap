@@ -1,8 +1,8 @@
 class Switchboard < Formula
   desc "Webhook intake board that verifies callers and routes work to agents"
   homepage "https://github.com/stump-wtf/switchboard"
-  url "https://github.com/stump-wtf/switchboard/archive/refs/tags/v0.7.0.tar.gz"
-  sha256 "1edccd5f34cc80dffce4d1629c91806fecb3f78f07525524db968eee5048fd38"
+  url "https://github.com/stump-wtf/switchboard/archive/refs/tags/v0.8.0.tar.gz"
+  sha256 "50cef7a04d832a2757776d6ee06d10234f4b48eafa91a2a46c88d16129cc0497"
   license "MIT"
   head "https://github.com/stump-wtf/switchboard.git", branch: "main"
 
@@ -18,6 +18,7 @@ class Switchboard < Formula
     # tarball and verified `switchboard version` reports "switchboard v0.6.0".
     #
     # @joestump-agent 09/30/2026 - Bumped to v0.7.0; built from the tag tarball
+    # @joestump-agent 10/16/2026 - Bumped to v0.8.0 by release-sweep.
     # and verified `switchboard version` reports "switchboard v0.7.0".
     ldflags = "-s -w -X github.com/stump-wtf/switchboard/internal/buildinfo.Version=v#{version}"
     system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/switchboard"

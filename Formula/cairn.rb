@@ -15,7 +15,8 @@ class Cairn < Formula
   # `brew audit --strict` rejects a `version` that the url already implies, and
   # rendering the whole file means there is no line to keep in sync.
   #
-  # Assets come from GitHub, never the canonical Gitea host, which is reachable
+  # @joestump-agent 10/17/2026 - Bumped to v0.5.0 by release-sweep.
+# Assets come from GitHub, never the canonical Gitea host, which is reachable
   # only on its own network: a Gitea-hosted download hangs for everyone else.
   desc "Share files, logs, and diffs as short links with provenance and a TTL"
   homepage "https://cairn.stump.wtf"
@@ -23,23 +24,23 @@ class Cairn < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_darwin_arm64.tar.gz"
-      sha256 "97c1c11e41f9806033a33d34577c81ba3583bd7cd8ba9f62a84409e9220f20f2"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_darwin_arm64.tar.gz"
+      sha256 "a616201c250cad1d04b9cbc34cc54243bf525fcd03c3ff21280ca8787088e5e9"
     end
     on_intel do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_darwin_amd64.tar.gz"
-      sha256 "7544081275a2dbef75230f280ce33a2ace8a261b1c4fa291aabf9f1be1db9c14"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_darwin_amd64.tar.gz"
+      sha256 "21620068032d608478950c8cf225db06f723aaec93f8a15f660f614c02f30041"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_linux_arm64.tar.gz"
-      sha256 "58f8c6e10a07add1ac04f362ee9cff262913e5fb15e7e1b115a8cec8b78efa28"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_linux_arm64.tar.gz"
+      sha256 "a854c398e80791e1a9e2e5f955a33a518f65089d80b06b966187bfdc68a6c4eb"
     end
     on_intel do
-      url "https://github.com/stump-wtf/cairn/releases/download/v0.4.0/cairn_0.4.0_linux_amd64.tar.gz"
-      sha256 "4ab829afb4ff328c272a299322a8da73c726b893bc9e1f1ecfcdfe29e2c8f083"
+      url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_linux_amd64.tar.gz"
+      sha256 "1e408d0725c99499dbeea7e89da551a5a8f92baa9b141aa1d887393fbab6ab12"
     end
   end
 

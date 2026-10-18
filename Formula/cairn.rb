@@ -16,7 +16,7 @@ class Cairn < Formula
   # rendering the whole file means there is no line to keep in sync.
   #
   # @joestump-agent 10/17/2026 - Bumped to v0.5.0 by release-sweep.
-# Assets come from GitHub, never the canonical Gitea host, which is reachable
+  # Assets come from GitHub, never the canonical Gitea host, which is reachable
   # only on its own network: a Gitea-hosted download hangs for everyone else.
   desc "Share files, logs, and diffs as short links with provenance and a TTL"
   homepage "https://cairn.stump.wtf"

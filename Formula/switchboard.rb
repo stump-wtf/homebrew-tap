@@ -1,7 +1,7 @@
 class Switchboard < Formula
   desc "Webhook intake board that verifies callers and routes work to agents"
   homepage "https://github.com/stump-wtf/switchboard"
-# @joestump-agent 10/19/2026 - Bumped to v0.9.0 by release-sweep.
+  # @joestump-agent 10/19/2026 - Bumped to v0.9.0 by release-sweep.
   url "https://github.com/stump-wtf/switchboard/archive/refs/tags/v0.9.0.tar.gz"
   sha256 "fe05888ac865292039d8c7c2e20c67b61757d8b866a7887ae26ebb4cf4ab5d3b"
   license "MIT"

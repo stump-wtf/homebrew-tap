@@ -83,6 +83,24 @@ Origin is Gitea at
 GitHub is a mirror. The GitHub side is what makes the `brew tap stump-wtf/tap`
 shorthand work — Homebrew resolves that to `github.com/stump-wtf/homebrew-tap`.
 
+## Automated version bumps
+
+`.gitea/workflows/bump.yml` checks every tracked project's GitHub releases
+twice a day (and accepts an on-demand or `upstream-release` dispatch
+trigger), and opens one small review PR per project — `url` + `sha256`
+rewritten mechanically by `scripts/tap-bump.rb`, checksum taken from a
+real download, gated by the same CI as a manual bump. See
+[ADR-0001](docs/adrs/0001-release-triggered-formula-bumps.md) for why it
+polls. To see what it would do without pushing anything: run it with
+`dry_run=true` via *Run workflow*, or locally:
+
+```bash
+ruby scripts/tap-bump.rb --dry-run
+```
+
+The manual steps below remain the fallback for when a run fails or a bump
+needs to land immediately.
+
 ## Updating a formula for a new release
 
 1. Tag and release upstream (`vX.Y.Z`).

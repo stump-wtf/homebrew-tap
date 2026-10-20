@@ -5,16 +5,18 @@
 # targets gracefully degrade on Linux.
 #
 # Targets:
-# - test:     Run brew audit --strict --online on all formulas
-# - lint:     Run brew style on all formulas and casks
-# - check:    Run both test and lint
+# - test:      Run brew audit --strict --online on all formulas
+# - lint:      Run brew style on all formulas and casks
+# - test-bump: Offline fixture tests for the release-bump script
+# - bump-dry:  Show what the release-bump automation would do right now
+# - check:     Run test, lint and test-bump
 
 FORMULAS := $(wildcard Formula/*.rb)
 CASKS := $(wildcard Casks/*.rb)
 
-.PHONY: test lint check syntax
+.PHONY: test lint check syntax test-bump bump-dry
 
-check: test lint
+check: test lint test-bump
 
 syntax:
 	@echo "Checking Formula syntax..."
@@ -32,3 +34,10 @@ test: syntax
 lint: syntax
 	@echo "Running brew style..."
 	@brew style Formula Casks
+
+test-bump:
+	@echo "Running tap-bump fixture tests..."
+	@sh scripts/ruby.sh scripts/test-tap-bump.rb
+
+bump-dry:
+	@sh scripts/ruby.sh scripts/tap-bump.rb --dry-run

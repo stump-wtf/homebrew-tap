@@ -49,6 +49,14 @@ jobs:
         run: |
           ls Formula/*.rb Casks/*.rb
 
+      - name: Run tap-bump tests
+        run: |
+          # Offline fixture tests for the release-bump automation (issue #40).
+          # No tap loading needed: the script is exercised through its CLI
+          # against fixture releases and local artifact files. No ruby on
+          # PATH in this container, hence the resolver (scripts/ruby.sh).
+          sh scripts/ruby.sh scripts/test-tap-bump.rb
+
       - name: Load and trust the tap
         run: |
           brew tap stump.wtf/homebrew-tap .

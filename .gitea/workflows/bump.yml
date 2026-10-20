@@ -1,0 +1,168 @@
+# Release-triggered formula bumps (issue #40, ADR-0001)
+#
+# When an upstream project this tap ships publishes a GitHub release, rewrite
+# that formula's url/sha256 (and cask version) and open one small review PR
+# per project, the shape renovate uses for dependency bumps. CI (ci.yml)
+# gates the PR: `brew audit --online` re-downloads the tarball and fails if
+# the computed sha256 is wrong.
+#
+# Triggers:
+# - schedule: twice a day, so a release lands within ~12h even with no
+#   upstream cooperation (ADR-0001 chose polling as the guaranteed path).
+# - workflow_dispatch: run the loop on demand; dry_run=true is the
+#   verify-without-a-release path, formula/version bump one project now.
+# - repository_dispatch (type upstream-release): optional fast path so an
+#   upstream release workflow can trigger its own bump immediately; its
+#   client_payload {formula, version} is validated before use.
+#
+# The runner gets no node-based actions (see ci.yml): plain git and curl in
+# the homebrew/brew container. Pushing and PR creation use the run's
+# GITHUB_TOKEN, so this repo's Actions token permissions must allow
+# contents: write and pull-requests: write.
+#
+# @joestump-agent 10/20/2026 - Added for stump.wtf/homebrew-tap#40.
+
+name: Bump formulae
+
+on:
+  schedule:
+    - cron: "17 6,18 * * *"
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: "Only this formula (default: every tracked project)"
+        required: false
+        type: string
+      version:
+        description: "Pin this tag instead of the newest release"
+        required: false
+        type: string
+      dry_run:
+        description: "true = report the plan, push nothing"
+        required: false
+        type: string
+        default: "false"
+  repository_dispatch:
+    types: [upstream-release]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tap-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Plan and open bump PRs
+    runs-on: ubuntu-latest
+    container: homebrew/brew:latest
+    env:
+      API_FORMULA: ${{ github.event.client_payload.formula }}
+      API_VERSION: ${{ github.event.client_payload.version }}
+      IN_FORMULA: ${{ github.event.inputs.formula }}
+      IN_VERSION: ${{ github.event.inputs.version }}
+      IN_DRY: ${{ github.event.inputs.dry_run }}
+      SERVER_URL: ${{ github.server_url }}
+      REPO_SLUG: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
+    steps:
+      - name: Clone the tap
+        run: |
+          git clone --quiet "${SERVER_URL}/${REPO_SLUG}.git" .
+          git checkout --quiet --detach "$GITHUB_SHA"
+
+      - name: Resolve request
+        shell: bash
+        run: |
+          set -euo pipefail
+          FORMULA="${API_FORMULA:-$IN_FORMULA}"
+          VERSION="${API_VERSION:-$IN_VERSION}"
+          DRY="${IN_DRY:-false}"
+          case "$FORMULA" in
+            ""|*[!a-z0-9-]*)
+              if [ -n "$FORMULA" ]; then echo "invalid formula name in request" >&2; exit 3; fi ;;
+          esac
+          case "$VERSION" in
+            ""|*[!A-Za-z0-9._+-]*)
+              if [ -n "$VERSION" ]; then echo "invalid version in request" >&2; exit 3; fi ;;
+          esac
+          echo "FORMULA=$FORMULA" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DRY=$DRY" >> "$GITHUB_ENV"
+
+      - name: Plan bumps
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUBY="$(sh scripts/ruby.sh --which)"
+          args=(--dry-run --json)
+          [ -n "$FORMULA" ] && args+=(--formula "$FORMULA")
+          [ -n "$VERSION" ] && args+=(--version "$VERSION")
+          "$RUBY" scripts/tap-bump.rb "${args[@]}" > bump-plan.json
+          "$RUBY" -e '
+            require "json"
+            plan = JSON.parse(File.read("bump-plan.json"))
+            plan.each { |r| puts "plan #{r["formula"]} #{r["current"]} -> #{r["target"]} (#{r["changed"]})#{r["error"] ? " ERROR: #{r["error"]}" : ""}" }
+            bad = plan.find { |r| r["error"] }
+            abort "upstream fetch failed: #{bad["error"]}" if bad
+            rows = plan.select { |r| r["changed"] }
+                       .map { |r| [r["repo"], r["formula"], r["target"]].join("\t") }
+            File.open(ENV.fetch("GITHUB_ENV"), "a") do |env|
+              env.puts "BUMP_ROWS<<BUMP_ROWS_EOF"
+              env.puts(rows.join("\n"))
+              env.puts "BUMP_ROWS_EOF"
+            end
+          '
+
+      - name: Open bump PRs
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUBY="$(sh scripts/ruby.sh --which)"
+          [ -n "${BUMP_ROWS:-}" ] || { echo "nothing to bump"; exit 0; }
+          API="${SERVER_URL}/api/v1"
+          TOIL_LABEL=$(curl -fsS -H "Authorization: token ${GITHUB_TOKEN}" \
+            "${API}/repos/${REPO_SLUG}/labels" \
+            | "$RUBY" -rjson -e 'puts (JSON.parse($stdin.read).find { |l| l["name"] == "toil" } || {})["id"]') || true
+          printf '%s\n' "$BUMP_ROWS" | while IFS=$'\t' read -r repo name tag; do
+            branch="bump/${name}-${tag}"
+            if [ -n "$(git ls-remote --heads origin "$branch")" ]; then
+              echo "skip ${name} ${tag}: ${branch} already pushed (PR pending)"
+              continue
+            fi
+            git fetch --quiet origin main
+            git checkout --quiet -B "$branch" origin/main
+            "$RUBY" scripts/tap-bump.rb --only-repo "$repo" --version "$tag"
+            if git diff --quiet; then
+              echo "skip ${name} ${tag}: no diff against current main"
+              continue
+            fi
+            git -c user.name="tap-bump" -c user.email="tap-bump@users.noreply.gitea.stump.rocks" \
+              commit -qam "toil(${name}): bump tap to ${tag}"
+            git push --quiet "https://oauth2:${GITHUB_TOKEN}@${SERVER_URL#https://}/${REPO_SLUG}.git" \
+              "refs/heads/${branch}" 2>&1 | sed -E 's#://[^@]*@#://***@#'
+            title="toil(${name}): bump tap to ${tag}"
+            body=$(printf '%s\n' \
+              "Automated upstream-release bump for \`${name}\` to ${tag} by \`.gitea/workflows/bump.yml\` (\`scripts/tap-bump.rb\`)." \
+              "" \
+              "- Upstream release: https://github.com/${repo}/releases/tag/${tag}" \
+              "- url + sha256 rewritten mechanically; the tarball was downloaded to compute the checksum." \
+              "- CI on this PR runs \`brew audit --strict --online\`, which re-downloads the artifact and fails on a checksum mismatch." \
+              "- Run: ${SERVER_URL}/${REPO_SLUG}/actions/runs/${RUN_ID}" \
+              "" \
+              "Opened automatically by the tap's bump workflow.")
+            pr_index=$(curl -fsS -X POST "${API}/repos/${REPO_SLUG}/pulls" \
+              -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
+              -d "$("$RUBY" -rjson -e 'puts JSON.generate({title: ARGV[0], head: ARGV[1], base: "main", body: ARGV[2], reviewers: ["joestump"]})' \
+                   "$title" "$branch" "$body")" \
+              | "$RUBY" -rjson -e 'print JSON.parse($stdin.read)["number"]')
+            if [ -n "${TOIL_LABEL:-}" ] && [ "${TOIL_LABEL}" != "" ]; then
+              curl -fsS -X POST "${API}/repos/${REPO_SLUG}/issues/${pr_index}/labels" \
+                -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
+                -d "{\"labels\":[${TOIL_LABEL}]}" > /dev/null || echo "could not label PR ${pr_index}"
+            fi
+            echo "opened PR #${pr_index} for ${name} ${tag}"
+          done

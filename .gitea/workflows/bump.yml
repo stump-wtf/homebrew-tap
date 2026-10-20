@@ -74,6 +74,7 @@ jobs:
           git checkout --quiet --detach "$GITHUB_SHA"
 
       - name: Resolve request
+        shell: bash
         run: |
           set -euo pipefail
           FORMULA="${API_FORMULA:-$IN_FORMULA}"
@@ -92,13 +93,15 @@ jobs:
           echo "DRY=$DRY" >> "$GITHUB_ENV"
 
       - name: Plan bumps
+        shell: bash
         run: |
           set -euo pipefail
+          RUBY="$(sh scripts/ruby.sh --which)"
           args=(--dry-run --json)
           [ -n "$FORMULA" ] && args+=(--formula "$FORMULA")
           [ -n "$VERSION" ] && args+=(--version "$VERSION")
-          ruby scripts/tap-bump.rb "${args[@]}" > bump-plan.json
-          ruby -e '
+          "$RUBY" scripts/tap-bump.rb "${args[@]}" > bump-plan.json
+          "$RUBY" -e '
             require "json"
             plan = JSON.parse(File.read("bump-plan.json"))
             plan.each { |r| puts "plan #{r["formula"]} #{r["current"]} -> #{r["target"]} (#{r["changed"]})#{r["error"] ? " ERROR: #{r["error"]}" : ""}" }
@@ -115,13 +118,15 @@ jobs:
 
       - name: Open bump PRs
         if: ${{ github.event.inputs.dry_run != 'true' }}
+        shell: bash
         run: |
           set -euo pipefail
+          RUBY="$(sh scripts/ruby.sh --which)"
           [ -n "${BUMP_ROWS:-}" ] || { echo "nothing to bump"; exit 0; }
           API="${SERVER_URL}/api/v1"
           TOIL_LABEL=$(curl -fsS -H "Authorization: token ${GITHUB_TOKEN}" \
             "${API}/repos/${REPO_SLUG}/labels" \
-            | ruby -rjson -e 'puts (JSON.parse($stdin.read).find { |l| l["name"] == "toil" } || {})["id"]') || true
+            | "$RUBY" -rjson -e 'puts (JSON.parse($stdin.read).find { |l| l["name"] == "toil" } || {})["id"]') || true
           printf '%s\n' "$BUMP_ROWS" | while IFS=$'\t' read -r repo name tag; do
             branch="bump/${name}-${tag}"
             if [ -n "$(git ls-remote --heads origin "$branch")" ]; then
@@ -130,7 +135,7 @@ jobs:
             fi
             git fetch --quiet origin main
             git checkout --quiet -B "$branch" origin/main
-            ruby scripts/tap-bump.rb --only-repo "$repo" --version "$tag"
+            "$RUBY" scripts/tap-bump.rb --only-repo "$repo" --version "$tag"
             if git diff --quiet; then
               echo "skip ${name} ${tag}: no diff against current main"
               continue
@@ -151,9 +156,9 @@ jobs:
               "Opened automatically by the tap's bump workflow.")
             pr_index=$(curl -fsS -X POST "${API}/repos/${REPO_SLUG}/pulls" \
               -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
-              -d "$(ruby -rjson -e 'puts JSON.generate({title: ARGV[0], head: ARGV[1], base: "main", body: ARGV[2], reviewers: ["joestump"]})' \
+              -d "$("$RUBY" -rjson -e 'puts JSON.generate({title: ARGV[0], head: ARGV[1], base: "main", body: ARGV[2], reviewers: ["joestump"]})' \
                    "$title" "$branch" "$body")" \
-              | ruby -rjson -e 'print JSON.parse($stdin.read)["number"]')
+              | "$RUBY" -rjson -e 'print JSON.parse($stdin.read)["number"]')
             if [ -n "${TOIL_LABEL:-}" ] && [ "${TOIL_LABEL}" != "" ]; then
               curl -fsS -X POST "${API}/repos/${REPO_SLUG}/issues/${pr_index}/labels" \
                 -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \

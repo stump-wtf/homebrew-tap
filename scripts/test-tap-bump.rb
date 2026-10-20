@@ -16,7 +16,7 @@ PASS = []
 FAIL = []
 
 def run(*args)
-  out, err, status = Open3.capture3("ruby", SCRIPT, *args)
+  out, err, status = Open3.capture3(Gem.ruby, SCRIPT, *args)
   [out, err, status.exitstatus]
 end
 

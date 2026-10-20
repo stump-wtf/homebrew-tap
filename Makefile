@@ -37,7 +37,7 @@ lint: syntax
 
 test-bump:
 	@echo "Running tap-bump fixture tests..."
-	@ruby scripts/test-tap-bump.rb
+	@sh scripts/ruby.sh scripts/test-tap-bump.rb
 
 bump-dry:
-	@ruby scripts/tap-bump.rb --dry-run
+	@sh scripts/ruby.sh scripts/tap-bump.rb --dry-run

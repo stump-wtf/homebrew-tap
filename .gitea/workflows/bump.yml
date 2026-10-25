@@ -16,11 +16,17 @@
 #   client_payload {formula, version} is validated before use.
 #
 # The runner gets no node-based actions (see ci.yml): plain git and curl in
-# the homebrew/brew container. Pushing and PR creation use the run's
-# GITHUB_TOKEN, so this repo's Actions token permissions must allow
-# contents: write and pull-requests: write.
+# the homebrew/brew container. Pushing and PR creation use the repo secret
+# BUMP_PUSH_TOKEN (a Gitea PAT with write:repository on this repo): this
+# runner injects no usable GITHUB_TOKEN, and a default-token push would not
+# fire downstream workflows anyway.
 #
 # @joestump-agent 10/20/2026 - Added for stump.wtf/homebrew-tap#40.
+#
+# @joestump-agent 10/25/2026 - Switched from the never-injected GITHUB_TOKEN
+#   to the BUMP_PUSH_TOKEN secret, and made undelivered bumps fail the run
+#   loudly instead of dying mid-loop with "unbound variable" (stump.wtf/
+#   homebrew-tap#53).
 
 name: Bump formulae
 
@@ -64,6 +70,7 @@ jobs:
       IN_FORMULA: ${{ github.event.inputs.formula }}
       IN_VERSION: ${{ github.event.inputs.version }}
       IN_DRY: ${{ github.event.inputs.dry_run }}
+      BUMP_TOKEN: ${{ secrets.BUMP_PUSH_TOKEN }}
       SERVER_URL: ${{ github.server_url }}
       REPO_SLUG: ${{ github.repository }}
       RUN_ID: ${{ github.run_id }}
@@ -104,9 +111,9 @@ jobs:
           "$RUBY" -e '
             require "json"
             plan = JSON.parse(File.read("bump-plan.json"))
-            plan.each { |r| puts "plan #{r["formula"]} #{r["current"]} -> #{r["target"]} (#{r["changed"]})#{r["error"] ? " ERROR: #{r["error"]}" : ""}" }
+            plan.each { |r| puts "plan #{r["formula"]} #{r["current"]} -> #{r["target"]} (#{r["changed"]})#{r["note"] ? " [#{r["note"]}]" : ""}#{r["error"] ? " ERROR: #{r["error"]}" : ""}" }
             bad = plan.find { |r| r["error"] }
-            abort "upstream fetch failed: #{bad["error"]}" if bad
+            abort "bump plan failed: #{bad["error"]}" if bad
             rows = plan.select { |r| r["changed"] }
                        .map { |r| [r["repo"], r["formula"], r["target"]].join("\t") }
             File.open(ENV.fetch("GITHUB_ENV"), "a") do |env|
@@ -122,28 +129,41 @@ jobs:
         run: |
           set -euo pipefail
           RUBY="$(sh scripts/ruby.sh --which)"
-          [ -n "${BUMP_ROWS:-}" ] || { echo "nothing to bump"; exit 0; }
+          [ -n "${BUMP_ROWS:-}" ] || { echo "nothing to bump: every tracked project is already current (per-project report in Plan bumps above)"; exit 0; }
+          if [ -z "${BUMP_TOKEN:-}" ]; then
+            echo "::error::BUMP_PUSH_TOKEN is not set on ${REPO_SLUG}: planned bump(s) cannot be opened. Set a Gitea PAT with write:repository on this repo as the repo secret BUMP_PUSH_TOKEN."
+            exit 1
+          fi
           API="${SERVER_URL}/api/v1"
-          TOIL_LABEL=$(curl -fsS -H "Authorization: token ${GITHUB_TOKEN}" \
-            "${API}/repos/${REPO_SLUG}/labels" \
-            | "$RUBY" -rjson -e 'puts (JSON.parse($stdin.read).find { |l| l["name"] == "toil" } || {})["id"]') || true
-          printf '%s\n' "$BUMP_ROWS" | while IFS=$'\t' read -r repo name tag; do
+          AUTH="Authorization: token ${BUMP_TOKEN}"
+          TOIL_LABEL=$(curl -fsS -H "$AUTH" "${API}/repos/${REPO_SLUG}/labels" 2>/dev/null \
+            | "$RUBY" -rjson -e 's = $stdin.read; unless s.strip.empty?; puts (JSON.parse(s).find { |l| l["name"] == "toil" } || {})["id"]; end' 2>/dev/null) || true
+          TOIL_LABEL="${TOIL_LABEL:-}"
+          failures=0
+          total=$(printf '%s\n' "$BUMP_ROWS" | wc -l)
+          while IFS=$'\t' read -r repo name tag; do
             branch="bump/${name}-${tag}"
             if [ -n "$(git ls-remote --heads origin "$branch")" ]; then
               echo "skip ${name} ${tag}: ${branch} already pushed (PR pending)"
               continue
             fi
-            git fetch --quiet origin main
-            git checkout --quiet -B "$branch" origin/main
-            "$RUBY" scripts/tap-bump.rb --only-repo "$repo" --version "$tag"
-            if git diff --quiet; then
-              echo "skip ${name} ${tag}: no diff against current main"
+            ok=true
+            git fetch --quiet origin main || ok=false
+            git checkout --quiet -B "$branch" origin/main || ok=false
+            "$RUBY" scripts/tap-bump.rb --only-repo "$repo" --version "$tag" || ok=false
+            if [ "$ok" = true ] && git diff --quiet; then
+              echo "skip ${name} ${tag}: no diff against current main (already bumped)"
               continue
             fi
             git -c user.name="tap-bump" -c user.email="tap-bump@users.noreply.gitea.stump.rocks" \
-              commit -qam "toil(${name}): bump tap to ${tag}"
-            git push --quiet "https://oauth2:${GITHUB_TOKEN}@${SERVER_URL#https://}/${REPO_SLUG}.git" \
-              "refs/heads/${branch}" 2>&1 | sed -E 's#://[^@]*@#://***@#'
+              commit -qam "toil(${name}): bump tap to ${tag}" || ok=false
+            git push --quiet "https://oauth2:${BUMP_TOKEN}@${SERVER_URL#https://}/${REPO_SLUG}.git" \
+              "refs/heads/${branch}" 2>&1 | sed -E 's#://[^@]*@#://***@#' || ok=false
+            if [ "$ok" != true ]; then
+              failures=$((failures + 1))
+              echo "FAILED ${name} ${tag}: apply or push failed; see log above"
+              continue
+            fi
             title="toil(${name}): bump tap to ${tag}"
             body=$(printf '%s\n' \
               "Automated upstream-release bump for \`${name}\` to ${tag} by \`.gitea/workflows/bump.yml\` (\`scripts/tap-bump.rb\`)." \
@@ -154,15 +174,29 @@ jobs:
               "- Run: ${SERVER_URL}/${REPO_SLUG}/actions/runs/${RUN_ID}" \
               "" \
               "Opened automatically by the tap's bump workflow.")
-            pr_index=$(curl -fsS -X POST "${API}/repos/${REPO_SLUG}/pulls" \
-              -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
-              -d "$("$RUBY" -rjson -e 'puts JSON.generate({title: ARGV[0], head: ARGV[1], base: "main", body: ARGV[2], reviewers: ["joestump"]})' \
-                   "$title" "$branch" "$body")" \
-              | "$RUBY" -rjson -e 'print JSON.parse($stdin.read)["number"]')
-            if [ -n "${TOIL_LABEL:-}" ] && [ "${TOIL_LABEL}" != "" ]; then
+            payload=$("$RUBY" -rjson -e 'puts JSON.generate({title: ARGV[0], head: ARGV[1], base: "main", body: ARGV[2], reviewers: ["joestump"]})' \
+              "$title" "$branch" "$body")
+            if ! pr_json=$(curl -fsS -X POST "${API}/repos/${REPO_SLUG}/pulls" \
+              -H "$AUTH" -H "Content-Type: application/json" -d "$payload" 2>pr-error.txt); then
+              failures=$((failures + 1))
+              echo "FAILED ${name} ${tag}: PR create failed: $(cat pr-error.txt 2>/dev/null || echo 'curl error')"
+              continue
+            fi
+            pr_index=$("$RUBY" -rjson -e 'print JSON.parse($stdin.read)["number"]' <<< "$pr_json") || pr_index=""
+            if [ -z "${pr_index:-}" ]; then
+              failures=$((failures + 1))
+              echo "FAILED ${name} ${tag}: PR create returned no number: ${pr_json}"
+              continue
+            fi
+            if [ -n "$TOIL_LABEL" ]; then
               curl -fsS -X POST "${API}/repos/${REPO_SLUG}/issues/${pr_index}/labels" \
-                -H "Authorization: token ${GITHUB_TOKEN}" -H "Content-Type: application/json" \
+                -H "$AUTH" -H "Content-Type: application/json" \
                 -d "{\"labels\":[${TOIL_LABEL}]}" > /dev/null || echo "could not label PR ${pr_index}"
             fi
             echo "opened PR #${pr_index} for ${name} ${tag}"
-          done
+          done < <(printf '%s\n' "$BUMP_ROWS")
+          if [ "$failures" -gt 0 ]; then
+            echo "::error::${failures} of ${total} planned bump(s) were not delivered; see FAILED lines above"
+            exit 1
+          fi
+          echo "delivered all ${total} planned bump(s)"

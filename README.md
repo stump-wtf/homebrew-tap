@@ -91,7 +91,11 @@ trigger), and opens one small review PR per project — `url` + `sha256`
 rewritten mechanically by `scripts/tap-bump.rb`, checksum taken from a
 real download, gated by the same CI as a manual bump. See
 [ADR-0001](docs/adrs/0001-release-triggered-formula-bumps.md) for why it
-polls. To see what it would do without pushing anything: run it with
+polls. Pushes and PR creation run under the `BUMP_PUSH_TOKEN` repo secret
+(a Gitea PAT with `write:repository` on this repo), since the runner
+injects no usable `GITHUB_TOKEN`; a run with planned bumps fails loudly
+while that secret is unset rather than skipping silently. To see what it
+would do without pushing anything: run it with
 `dry_run=true` via *Run workflow*, or locally:
 
 ```bash

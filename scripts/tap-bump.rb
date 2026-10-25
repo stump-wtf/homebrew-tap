@@ -19,7 +19,9 @@
 #   --downloads-dir  fixture mode: hash local files instead of downloading
 #
 # Exit codes: 0 success (changed or already current), 2 an upstream fetch or
-# download failed, 3 the request was invalid.
+# download failed or a formula/cask has no parseable upstream GitHub url,
+# 3 the request was invalid. A plan that leaves any project skipped or
+# unresolved reports it per project and exits 2, never a silent no-op.
 
 require "digest"
 require "json"
@@ -57,10 +59,15 @@ module TapBump
     token = ENV["GITHUB_TOKEN"].to_s
     cmd += ["-H", "Authorization: Bearer #{token}"] unless token.empty?
     cmd << url
-    out, err, status = Open3.capture3(*cmd)
-    raise Error, "GET #{url} failed (curl exit #{status.exitstatus}): #{err.strip}" unless status.success?
+    last = nil
+    3.times do |attempt|
+      out, err, status = Open3.capture3(*cmd)
+      return out if status.success?
 
-    out
+      last = "GET #{url} failed (curl exit #{status.exitstatus}): #{err.strip}"
+      sleep(5 * (attempt + 1)) unless attempt == 2
+    end
+    raise Error, last
   end
 
   def sha256_of(url, downloads_dir: nil)
@@ -267,10 +274,18 @@ module TapBump
 
   def plan(root, formula: nil, version: nil, api_base: "https://api.github.com",
            releases_dir: nil, downloads_dir: nil, apply: true, only_repo: nil)
+    unresolved = []
     entries = scan(root).filter_map do |path, kind|
+      name = File.basename(path, ".rb")
+      next if formula && name != formula && name != "#{formula}-desktop"
+
       repo = upstream_repo(path)
-      next if repo.nil?
-      next if formula && File.basename(path, ".rb") != formula && File.basename(path, ".rb") != "#{formula}-desktop"
+      if repo.nil?
+        # A scoped run can only be about the named repo/formula; reporting an
+        # entry with no upstream would fail an unrelated project's bump.
+        unresolved << { path: path, kind: kind } if only_repo.nil?
+        next
+      end
       next if only_repo && repo != only_repo
 
       { path: path, kind: kind, repo: repo, current: current_tag(path, kind) }
@@ -305,6 +320,11 @@ module TapBump
       end
       results << res
     end
+    unresolved.each do |u|
+      results << { "repo" => nil, "formula" => File.basename(u[:path], ".rb"),
+                   "kind" => u[:kind].to_s, "changed" => false,
+                   "error" => "no upstream GitHub url in #{u[:path]}: the bump loop can never track this project" }
+    end
     results.sort_by { |r| r["repo"].to_s }
   end
 
@@ -336,7 +356,7 @@ module TapBump
     else
       results.each do |r|
         if r["error"]
-          warn "tap-bump: #{r['repo']}: #{r['error']}"
+          warn "tap-bump: #{r["repo"] || r["formula"]}: #{r["error"]}"
         elsif r["changed"]
           puts "bump #{r['formula']} #{r['current']} -> #{r['target']} (#{r['files'].size} file(s))"
         else

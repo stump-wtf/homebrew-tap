@@ -327,6 +327,125 @@ check "second run is a no-op" do
   end
 end
 
+# --- cairn-shaped binary formula (stump.wtf/homebrew-tap#53) -------------------
+
+check "cairn-shaped formula (nested blocks, no version line) bumps all four urls" do
+  Dir.mktmpdir do |d|
+    make_tap(d)
+    f = File.join(d, "Formula", "cairn.rb")
+    File.write(f, <<~RB)
+      class Cairn < Formula
+        desc "fixture"
+        license "MIT"
+        on_macos do
+          on_arm do
+            url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_darwin_arm64.tar.gz"
+            sha256 "#{"0" * 64}"
+          end
+          on_intel do
+            url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_darwin_amd64.tar.gz"
+            sha256 "#{"1" * 64}"
+          end
+        end
+        on_linux do
+          on_arm do
+            url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_linux_arm64.tar.gz"
+            sha256 "#{"2" * 64}"
+          end
+          on_intel do
+            url "https://github.com/stump-wtf/cairn/releases/download/v0.5.0/cairn_0.5.0_linux_amd64.tar.gz"
+            sha256 "#{"3" * 64}"
+          end
+        end
+        def install; end
+      end
+    RB
+    plats = %w[darwin_arm64 darwin_amd64 linux_arm64 linux_amd64]
+    release = { tag_name: "v0.6.0", prerelease: false, draft: false,
+                assets: plats.map do |plat|
+                  { name: "cairn_0.6.0_#{plat}.tar.gz",
+                    browser_download_url: "https://github.com/stump-wtf/cairn/releases/download/v0.6.0/cairn_0.6.0_#{plat}.tar.gz" }
+                end }
+    File.write(File.join(d, "releases", "stump-wtf_cairn.json"), JSON.generate([release]))
+    plats.each_with_index { |p, i| File.write(File.join(d, "dl", "cairn_0.6.0_#{p}.tar.gz"), "cairn-bytes-#{i}") }
+    out, _err, code = run("--root", d, "--releases-dir", File.join(d, "releases"),
+                          "--downloads-dir", File.join(d, "dl"))
+    body = File.read(f)
+    code.zero? && out.include?("bump cairn v0.5.0 -> v0.6.0") &&
+      plats.all? { |p| body.include?("download/v0.6.0/cairn_0.6.0_#{p}.tar.gz") } &&
+      !body.include?("v0.5.0") &&
+      plats.each_with_index.all? { |p, i| body.include?(sha_of("cairn-bytes-#{i}")) }
+  end
+end
+
+# --- loud skip reporting --------------------------------------------------------
+
+check "formula without a GitHub url is reported and exits 2" do
+  Dir.mktmpdir do |d|
+    make_tap(d)
+    f = File.join(d, "Formula", "localtool.rb")
+    File.write(f, <<~RB)
+      class Localtool < Formula
+        url "https://gitea.stump.rocks/stump.wtf/localtool/archive/refs/tags/v1.0.0.tar.gz"
+        sha256 "#{"b" * 64}"
+      end
+    RB
+    File.write(File.join(d, "releases", "stump-wtf_localtool.json"),
+               JSON.generate([{ tag_name: "v1.1.0", prerelease: false, draft: false, assets: [] }]))
+    File.write(File.join(d, "dl", "v1.1.0.tar.gz"), "x")
+    out, _err, code = run("--root", d, "--releases-dir", File.join(d, "releases"),
+                          "--downloads-dir", File.join(d, "dl"), "--dry-run", "--json")
+    plan = JSON.parse(out)
+    code == 2 && plan.size == 1 && plan[0]["formula"] == "localtool" &&
+      plan[0]["changed"] == false && plan[0]["error"].include?("no upstream GitHub url")
+  end
+end
+
+check "plan reports already-current projects with a note" do
+  Dir.mktmpdir do |d|
+    make_tap(d)
+    f = File.join(d, "Formula", "noted.rb")
+    File.write(f, <<~RB)
+      class Noted < Formula
+        url "https://github.com/stump-wtf/noted/archive/refs/tags/v3.0.0.tar.gz"
+        sha256 "#{"c" * 64}"
+      end
+    RB
+    File.write(File.join(d, "releases", "stump-wtf_noted.json"),
+               JSON.generate([{ tag_name: "v3.0.0", prerelease: false, draft: false, assets: [] }]))
+    out, _err, code = run("--root", d, "--releases-dir", File.join(d, "releases"),
+                          "--downloads-dir", File.join(d, "dl"), "--dry-run", "--json")
+    plan = JSON.parse(out)
+    code.zero? && plan[0]["changed"] == false && plan[0]["note"] == "already current"
+  end
+end
+
+check "--only-repo does not fail on an unrelated formula with no github url" do
+  Dir.mktmpdir do |d|
+    make_tap(d)
+    File.write(File.join(d, "Formula", "goodtool.rb"), <<~RB)
+      class Goodtool < Formula
+        url "https://github.com/stump-wtf/goodtool/archive/refs/tags/v1.0.0.tar.gz"
+        sha256 "#{"a" * 64}"
+      end
+    RB
+    File.write(File.join(d, "Formula", "localtool.rb"), <<~RB)
+      class Localtool < Formula
+        url "https://gitea.stump.rocks/stump.wtf/localtool/archive/refs/tags/v1.0.0.tar.gz"
+        sha256 "#{"b" * 64}"
+      end
+    RB
+    File.write(File.join(d, "releases", "stump-wtf_goodtool.json"),
+               JSON.generate([{ tag_name: "v1.1.0", prerelease: false, draft: false, assets: [] }]))
+    File.write(File.join(d, "dl", "v1.1.0.tar.gz"), "x")
+    out, _err, code = run("--root", d, "--releases-dir", File.join(d, "releases"),
+                          "--downloads-dir", File.join(d, "dl"), "--dry-run", "--json",
+                          "--only-repo", "stump-wtf/goodtool", "--version", "v1.1.0")
+    plan = JSON.parse(out)
+    code.zero? && plan.size == 1 && plan[0]["repo"] == "stump-wtf/goodtool" && plan[0]["changed"] == true
+  end
+end
+
 puts
 puts "#{PASS.size} passed, #{FAIL.size} failed"
 exit(FAIL.empty? ? 0 : 1)

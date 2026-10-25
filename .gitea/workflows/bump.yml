@@ -151,7 +151,13 @@ jobs:
             git fetch --quiet origin main || ok=false
             git checkout --quiet -B "$branch" origin/main || ok=false
             "$RUBY" scripts/tap-bump.rb --only-repo "$repo" --version "$tag" || ok=false
-            if [ "$ok" = true ] && git diff --quiet; then
+            if [ "$ok" != true ]; then
+              failures=$((failures + 1))
+              echo "FAILED ${name} ${tag}: apply failed; pushing nothing for ${branch}"
+              git reset --hard --quiet origin/main || true
+              continue
+            fi
+            if git diff --quiet; then
               echo "skip ${name} ${tag}: no diff against current main (already bumped)"
               continue
             fi
@@ -161,7 +167,7 @@ jobs:
               "refs/heads/${branch}" 2>&1 | sed -E 's#://[^@]*@#://***@#' || ok=false
             if [ "$ok" != true ]; then
               failures=$((failures + 1))
-              echo "FAILED ${name} ${tag}: apply or push failed; see log above"
+              echo "FAILED ${name} ${tag}: commit or push failed; see log above"
               continue
             fi
             title="toil(${name}): bump tap to ${tag}"

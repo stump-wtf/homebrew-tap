@@ -276,12 +276,16 @@ module TapBump
            releases_dir: nil, downloads_dir: nil, apply: true, only_repo: nil)
     unresolved = []
     entries = scan(root).filter_map do |path, kind|
+      name = File.basename(path, ".rb")
+      next if formula && name != formula && name != "#{formula}-desktop"
+
       repo = upstream_repo(path)
       if repo.nil?
-        unresolved << { path: path, kind: kind }
+        # A scoped run can only be about the named repo/formula; reporting an
+        # entry with no upstream would fail an unrelated project's bump.
+        unresolved << { path: path, kind: kind } if only_repo.nil?
         next
       end
-      next if formula && File.basename(path, ".rb") != formula && File.basename(path, ".rb") != "#{formula}-desktop"
       next if only_repo && repo != only_repo
 
       { path: path, kind: kind, repo: repo, current: current_tag(path, kind) }

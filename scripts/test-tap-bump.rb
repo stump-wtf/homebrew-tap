@@ -420,6 +420,32 @@ check "plan reports already-current projects with a note" do
   end
 end
 
+check "--only-repo does not fail on an unrelated formula with no github url" do
+  Dir.mktmpdir do |d|
+    make_tap(d)
+    File.write(File.join(d, "Formula", "goodtool.rb"), <<~RB)
+      class Goodtool < Formula
+        url "https://github.com/stump-wtf/goodtool/archive/refs/tags/v1.0.0.tar.gz"
+        sha256 "#{"a" * 64}"
+      end
+    RB
+    File.write(File.join(d, "Formula", "localtool.rb"), <<~RB)
+      class Localtool < Formula
+        url "https://gitea.stump.rocks/stump.wtf/localtool/archive/refs/tags/v1.0.0.tar.gz"
+        sha256 "#{"b" * 64}"
+      end
+    RB
+    File.write(File.join(d, "releases", "stump-wtf_goodtool.json"),
+               JSON.generate([{ tag_name: "v1.1.0", prerelease: false, draft: false, assets: [] }]))
+    File.write(File.join(d, "dl", "v1.1.0.tar.gz"), "x")
+    out, _err, code = run("--root", d, "--releases-dir", File.join(d, "releases"),
+                          "--downloads-dir", File.join(d, "dl"), "--dry-run", "--json",
+                          "--only-repo", "stump-wtf/goodtool", "--version", "v1.1.0")
+    plan = JSON.parse(out)
+    code.zero? && plan.size == 1 && plan[0]["repo"] == "stump-wtf/goodtool" && plan[0]["changed"] == true
+  end
+end
+
 puts
 puts "#{PASS.size} passed, #{FAIL.size} failed"
 exit(FAIL.empty? ? 0 : 1)

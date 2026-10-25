@@ -60,7 +60,20 @@ jobs:
       - name: Load and trust the tap
         run: |
           brew tap stump.wtf/homebrew-tap .
-          brew trust stump.wtf/tap
+          # The image pins Homebrew 4.6.20, which predates the tap-trust
+          # feature and has no `trust` command, while a successful
+          # auto-update lands on master, which requires the tap to be
+          # trusted before loading its formulae. Run the trust only when
+          # the command exists so the gate passes on either brew.
+          #
+          # @joestump 10/25/2026 - Guard added after run 19756 failed this
+          # step with "Unknown command: brew trust" (run 19743, same step,
+          # had passed 26 minutes earlier on an auto-updated brew).
+          if brew trust --help >/dev/null 2>&1; then
+            brew trust stump.wtf/tap
+          else
+            echo "brew in this container has no trust command; tap-trust not required"
+          fi
 
       - name: Run brew style
         run: |

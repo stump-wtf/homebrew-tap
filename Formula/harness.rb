@@ -1,9 +1,10 @@
 class Harness < Formula
   # @joestump-agent 10/25/2026 - Bumped to v0.16.0 by release-sweep.
+  # @joestump-agent 10/26/2026 - Bumped to v0.17.0 by release-sweep.
   desc "Supervise long-running agent processes from a client-server TUI"
   homepage "https://github.com/stump-wtf/harness"
-  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.16.0.tar.gz"
-  sha256 "8d3627be8f5ea04fe3e27b40dfd0fbb783687913786f97aa0c02f629fd817ff5"
+  url "https://github.com/stump-wtf/harness/archive/refs/tags/v0.17.0.tar.gz"
+  sha256 "71adda3dda43a19f8bd9be9c559dc4aa853d406c4ca1b692619e9d12bdc08b55"
   license "MIT"
   head "https://github.com/stump-wtf/harness.git", branch: "main"
 
